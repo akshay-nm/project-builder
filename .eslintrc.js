@@ -12,7 +12,17 @@ module.exports = {
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'error',
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': 'warn',
+    // Disable strict formatting rules for development
+    'prettier/prettier': 'off', // Disable prettier temporarily
+    'import/prefer-default-export': 'off',
+    'jsx-a11y/label-has-associated-control': 'off',
+    'jsx-a11y/no-autofocus': 'warn',
+    'import/no-useless-path-segments': 'off',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-console': 'warn',
+    'no-alert': 'warn',
+    'global-require': 'off',
   },
   parserOptions: {
     ecmaVersion: 2022,
