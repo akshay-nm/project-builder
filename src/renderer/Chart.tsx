@@ -1,164 +1,130 @@
-import React, { useMemo } from 'react';
-import { Group } from '@visx/group';
-import { Tree, hierarchy } from '@visx/hierarchy';
-import { HierarchyPointNode } from '@visx/hierarchy/lib/types';
-import { LinkHorizontal } from '@visx/shape';
-import { LinearGradient } from '@visx/gradient';
+import React from 'react';
+import ReactFlow, { Controls, Background, NodeTypes } from 'reactflow';
+import 'reactflow/dist/style.css';
 
-const peach = '#fd9b93';
-const pink = '#fe6e9e';
-const blue = '#03c0dc';
-const green = '#26deb0';
-const plum = '#71248e';
-const lightpurple = '#374469';
-const white = '#ffffff';
-export const background = '#272b4d';
+import { TreeProps } from './types';
+import { CustomNode, NodeEditForm, InputModal, ConfirmDialog } from './components';
+import { useDependencyLogic } from './hooks/useDependencyLogic';
+import { useChartState } from './hooks/useChartState';
+import { useChartOperations } from './hooks/useChartOperations';
+import { useChartEffects } from './hooks/useChartEffects';
+import { useTreeExport } from './hooks/useTreeExport';
 
-export interface TreeNode {
-  name: string;
-  children?: this[];
-}
-
-type HierarchyNode = HierarchyPointNode<TreeNode>;
-
-function RootNode({ node }: { node: HierarchyNode }) {
-  return (
-    <Group top={node.x} left={node.y}>
-      <circle r={12} fill="url('#lg')" />
-      <text
-        dy=".33em"
-        fontSize={9}
-        fontFamily="Arial"
-        textAnchor="middle"
-        style={{ pointerEvents: 'none' }}
-        fill={plum}
-      >
-        {node.data.name}
-      </text>
-    </Group>
-  );
-}
-
-function ParentNode({ node }: { node: HierarchyNode }) {
-  const width = 40;
-  const height = 20;
-  const centerX = -width / 2;
-  const centerY = -height / 2;
-
-  return (
-    <Group top={node.x} left={node.y}>
-      <rect
-        height={height}
-        width={width}
-        y={centerY}
-        x={centerX}
-        fill={background}
-        stroke={blue}
-        strokeWidth={1}
-        onClick={() => {
-          alert(`clicked: ${JSON.stringify(node.data.name)}`);
-        }}
-      />
-      <text
-        dy=".33em"
-        fontSize={9}
-        fontFamily="Arial"
-        textAnchor="middle"
-        style={{ pointerEvents: 'none' }}
-        fill={white}
-      >
-        {node.data.name}
-      </text>
-    </Group>
-  );
-}
-
-/** Handles rendering Root, Parent, and other Nodes. */
-function Node({ node }: { node: HierarchyNode }) {
-  const width = 40;
-  const height = 20;
-  const centerX = -width / 2;
-  const centerY = -height / 2;
-  const isRoot = node.depth === 0;
-  const isParent = !!node.children;
-
-  if (isRoot) return <RootNode node={node} />;
-  if (isParent) return <ParentNode node={node} />;
-
-  return (
-    <Group top={node.x} left={node.y}>
-      <rect
-        height={height}
-        width={width}
-        y={centerY}
-        x={centerX}
-        fill={background}
-        stroke={green}
-        strokeWidth={1}
-        strokeDasharray="2,2"
-        strokeOpacity={0.6}
-        rx={10}
-        onClick={() => {
-          alert(`clicked: ${JSON.stringify(node.data.name)}`);
-        }}
-      />
-      <text
-        dy=".33em"
-        fontSize={9}
-        fontFamily="Arial"
-        textAnchor="middle"
-        fill={green}
-        style={{ pointerEvents: 'none' }}
-      >
-        {node.data.name}
-      </text>
-    </Group>
-  );
-}
-
-const defaultMargin = { top: 10, left: 80, right: 80, bottom: 10 };
-
-export type TreeProps = {
-  width: number;
-  height: number;
-  margin: { top: number; right: number; bottom: number; left: number };
-  rawTree: TreeNode;
+const nodeTypes: NodeTypes = {
+  custom: CustomNode,
 };
 
-export function Chart({
-  width,
-  height,
-  margin = defaultMargin,
-  rawTree,
-}: TreeProps) {
-  const data = useMemo(() => hierarchy(rawTree), [rawTree]);
-  const yMax = height - margin.top - margin.bottom;
-  const xMax = width - margin.left - margin.right;
+export function Chart({ rawTree, onTreeChange, onGetTreeData, showDependencies = false }: TreeProps) {
+  const chartState = useChartState(rawTree);
+  const { getAvailableNodes } = useDependencyLogic(chartState.nodes, chartState.edges);
+  
+  const chartOperations = useChartOperations({
+    nodes: chartState.nodes,
+    edges: chartState.edges,
+    setNodes: chartState.setNodes,
+    setEdges: chartState.setEdges,
+    onTreeChange,
+    openInputModal: chartState.openInputModal,
+    openConfirmDialog: chartState.openConfirmDialog,
+    openNodeEdit: chartState.openNodeEdit,
+    resetModals: chartState.resetModals,
+    showDependencies,
+    handleNodeSelect: chartState.handleNodeSelect,
+  });
 
-  return width < 10 ? null : (
-    <svg width={width} height={height}>
-      <LinearGradient id="lg" from={peach} to={pink} />
-      <rect width={width} height={height} rx={14} fill={background} />
-      <Tree<TreeNode> root={data} size={[yMax, xMax]}>
-        {(tree) => (
-          <Group top={margin.top} left={margin.left}>
-            {tree.links().map((link, i) => (
-              <LinkHorizontal
-                // eslint-disable-next-line react/no-array-index-key
-                key={`link-${i}`}
-                data={link}
-                stroke={lightpurple}
-                strokeWidth="1"
-                fill="none"
-              />
-            ))}
-            {tree.descendants().map((node, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <Node key={`node-${i}`} node={node} />
-            ))}
-          </Group>
-        )}
-      </Tree>
-    </svg>
+  const { handleExport } = useTreeExport({
+    nodes: chartState.nodes,
+    edges: chartState.edges,
+    onGetTreeData,
+  });
+
+  useChartEffects({
+    rawTree,
+    showDependencies,
+    selectedNodes: chartState.selectedNodes,
+    nodes: chartState.nodes,
+    edges: chartState.edges,
+    setNodes: chartState.setNodes,
+    setEdges: chartState.setEdges,
+    setSelectedNodes: chartState.setSelectedNodes,
+    addChildNode: chartOperations.addChildNode,
+    removeNode: chartOperations.removeNode,
+    editNode: chartOperations.editNode,
+    handleNodeSelect: chartState.handleNodeSelect,
+  });
+
+  const handleSaveNodeData = (nodeData: any) => {
+    chartOperations.saveNodeData(chartState.nodeEditForm.nodeId, nodeData);
+  };
+
+  return (
+    <div className="h-full w-full flex flex-col border border-slate-800 bg-slate-950">
+      <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={chartOperations.addRootNode}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-100 h-9 px-4 py-2"
+          >
+            <span className="mr-2">+</span>
+            Add Node
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-600 bg-transparent hover:bg-slate-700 text-slate-300 h-9 px-4 py-2"
+            disabled={chartState.nodes.length === 0}
+          >
+            <span className="mr-2">↓</span>
+            Export
+          </button>
+
+          {chartState.nodes.length === 0 && (
+            <span className="text-slate-500 text-sm ml-4">Start by adding a node</span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0">
+        <ReactFlow
+          nodes={chartState.nodes}
+          edges={chartState.edges}
+          onNodesChange={chartState.onNodesChange}
+          onEdgesChange={chartState.onEdgesChange}
+          onConnect={chartOperations.onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+        >
+          <Controls />
+          <Background />
+        </ReactFlow>
+      </div>
+
+      <NodeEditForm
+        isOpen={chartState.nodeEditForm.isOpen}
+        nodeData={chartState.nodeEditForm.nodeData}
+        availableNodes={getAvailableNodes(chartState.nodeEditForm.nodeId)}
+        onSave={handleSaveNodeData}
+        onCancel={chartState.resetModals}
+      />
+
+      <ConfirmDialog
+        isOpen={chartState.showConfirmDialog.isOpen}
+        message={chartState.showConfirmDialog.message}
+        onConfirm={chartState.showConfirmDialog.onConfirm}
+        onCancel={chartState.resetModals}
+      />
+
+      <InputModal
+        isOpen={chartState.inputModal.isOpen}
+        title={chartState.inputModal.title}
+        placeholder={chartState.inputModal.placeholder}
+        onConfirm={chartState.inputModal.onConfirm}
+        onCancel={chartState.resetModals}
+      />
+    </div>
   );
 }
+
+export type { NodeMetadata, TreeNode, TreeProps } from './types';
