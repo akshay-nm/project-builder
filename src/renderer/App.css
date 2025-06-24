@@ -1,8 +1,8 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Global styles for full screen app */
-html, 
-body, 
+html,
+body,
 #root {
   margin: 0;
   padding: 0;
@@ -12,3 +12,41 @@ body,
 }
 
 /* Remove all conflicting styles to let Tailwind handle everything */
+
+/* Sidebar button styles */
+.btn {
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background: transparent;
+  color: inherit;
+}
+
+.btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.btn.active {
+  background-color: #059669;
+  color: white;
+  border-color: #059669;
+}
+
+.btn.active:hover {
+  background-color: #047857;
+  border-color: #047857;
+}
+
+.btn.outline {
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.btn.outline:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: #9ca3af;
+}
