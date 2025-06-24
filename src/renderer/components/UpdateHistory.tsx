@@ -434,10 +434,10 @@ export default function UpdateHistory() {
       {/* Detail Modal */}
       {isDetailModalOpen && selectedUpdate && (
         <div className="fixed inset-0 bg-black/80 flex justify-center items-center z-[1000] p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-4xl w-full shadow-xl max-h-[90vh] flex flex-col">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg min-w-[600px] max-w-[800px] shadow-xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 pb-0 flex-shrink-0">
               <h3 className="text-xl font-medium text-emerald-400">
-                📋 Update Details - {formatDate(selectedUpdate.date)}
+                📋 Daily Update - {formatDate(selectedUpdate.date)}
               </h3>
               <button
                 type="button"
@@ -448,147 +448,428 @@ export default function UpdateHistory() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-6">
+            {/* Tab Headers */}
+            <div className="flex border-b border-slate-700 px-6 mt-4 flex-shrink-0">
+              <div className="flex items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 border-emerald-400 text-emerald-400">
+                <span>👷</span>
+                <span>Labour</span>
+              </div>
+              <div className="flex items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 border-emerald-400 text-emerald-400">
+                <span>📋</span>
+                <span>Stage Passing</span>
+              </div>
+              <div className="flex items-center space-x-2 px-4 py-3 text-sm font-medium border-b-2 border-emerald-400 text-emerald-400">
+                <span>📦</span>
+                <span>Material Registers</span>
+              </div>
+            </div>
+
+            {/* Tab Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-8">
                 {/* Labour Section */}
-                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                  <h4 className="text-lg font-medium text-slate-50 mb-4 flex items-center">
-                    👷 Labour Summary
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-slate-400">Engineers:</span>
-                      <span className="ml-2 text-emerald-400 font-medium">
-                        {selectedUpdate.sections.labour.summary.totalEngineers}
-                      </span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-medium text-slate-50">
+                      👷 Daily Labour Update
+                    </h4>
+                    <div className="text-sm text-slate-400">
+                      Date: {formatDate(selectedUpdate.date)}
                     </div>
-                    <div>
-                      <span className="text-slate-400">Skilled Labour:</span>
-                      <span className="ml-2 text-emerald-400 font-medium">
-                        {
-                          selectedUpdate.sections.labour.summary
-                            .totalSkilledLabour
-                        }
-                      </span>
+                  </div>
+
+                  <div className="bg-slate-800 rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-2 gap-px bg-slate-700">
+                      <div className="bg-slate-800 px-4 py-3 text-slate-300 font-medium text-sm">
+                        Labour Type
+                      </div>
+                      <div className="bg-slate-800 px-4 py-3 text-slate-300 font-medium text-sm text-center">
+                        Quantity
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-400">Unskilled Labour:</span>
-                      <span className="ml-2 text-emerald-400 font-medium">
-                        {
-                          selectedUpdate.sections.labour.summary
-                            .totalUnskilledLabour
-                        }
-                      </span>
+
+                    {/* Engineers Section */}
+                    <div className="grid grid-cols-2 gap-px bg-slate-600">
+                      <div className="bg-slate-700 px-4 py-2 text-emerald-300 font-semibold text-sm">
+                        👨‍💼 Engineers
+                      </div>
+                      <div className="bg-slate-700 px-4 py-2" />
                     </div>
-                    <div>
-                      <span className="text-slate-400">Grand Total:</span>
-                      <span className="ml-2 text-emerald-400 font-medium">
+
+                    <div className="grid grid-cols-2 gap-px bg-slate-700">
+                      <div className="bg-slate-800 px-4 py-3 text-slate-50 text-sm flex items-center">
+                        <span className="mr-2">🎓</span>Degree
+                      </div>
+                      <div className="bg-slate-800 px-4 py-3 text-center text-emerald-400 font-medium">
+                        {selectedUpdate.sections.labour.data.Degree}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-px bg-slate-700">
+                      <div className="bg-slate-800 px-4 py-3 text-slate-50 text-sm flex items-center">
+                        <span className="mr-2">📜</span>Diploma
+                      </div>
+                      <div className="bg-slate-800 px-4 py-3 text-center text-emerald-400 font-medium">
+                        {selectedUpdate.sections.labour.data.Diploma}
+                      </div>
+                    </div>
+
+                    {/* Skilled Labour Section */}
+                    <div className="grid grid-cols-2 gap-px bg-slate-600">
+                      <div className="bg-slate-700 px-4 py-2 text-emerald-300 font-semibold text-sm">
+                        👷‍♂️ Skilled Labour
+                      </div>
+                      <div className="bg-slate-700 px-4 py-2" />
+                    </div>
+
+                    {[
+                      { key: 'Mason', icon: '🧱' },
+                      { key: 'Carpenter', icon: '🔨' },
+                      { key: 'Bar bender', icon: '⚙️' },
+                      { key: 'Tier', icon: '🔗' },
+                      { key: 'Painter', icon: '🎨' },
+                      { key: 'Polisher', icon: '✨' },
+                      { key: 'Welder', icon: '🔥' },
+                      { key: 'Plumber', icon: '🔧' },
+                      { key: 'Glazier', icon: '🪟' },
+                    ].map(({ key, icon }) => (
+                      <div
+                        key={key}
+                        className="grid grid-cols-2 gap-px bg-slate-700"
+                      >
+                        <div className="bg-slate-800 px-4 py-3 text-slate-50 text-sm flex items-center">
+                          <span className="mr-2">{icon}</span>
+                          {key}
+                        </div>
+                        <div className="bg-slate-800 px-4 py-3 text-center text-emerald-400 font-medium">
+                          {
+                            selectedUpdate.sections.labour.data[
+                              key as keyof LabourData
+                            ]
+                          }
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Unskilled Labour Section */}
+                    <div className="grid grid-cols-2 gap-px bg-slate-600">
+                      <div className="bg-slate-700 px-4 py-2 text-emerald-300 font-semibold text-sm">
+                        👤 Unskilled Labour
+                      </div>
+                      <div className="bg-slate-700 px-4 py-2" />
+                    </div>
+
+                    {[
+                      { key: 'Male', icon: '👨' },
+                      { key: 'Bhisty', icon: '🚰' },
+                      { key: 'Mazdoor(male)', icon: '👷' },
+                      { key: 'Mazdoor(female)', icon: '👷‍♀️' },
+                    ].map(({ key, icon }) => (
+                      <div
+                        key={key}
+                        className="grid grid-cols-2 gap-px bg-slate-700"
+                      >
+                        <div className="bg-slate-800 px-4 py-3 text-slate-50 text-sm flex items-center">
+                          <span className="mr-2">{icon}</span>
+                          {key}
+                        </div>
+                        <div className="bg-slate-800 px-4 py-3 text-center text-emerald-400 font-medium">
+                          {
+                            selectedUpdate.sections.labour.data[
+                              key as keyof LabourData
+                            ]
+                          }
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Total */}
+                    <div className="grid grid-cols-2 gap-px bg-slate-700">
+                      <div className="bg-slate-800 px-4 py-3 text-emerald-400 font-medium text-sm">
+                        Total Workers
+                      </div>
+                      <div className="bg-slate-800 px-4 py-3 text-emerald-400 font-medium text-sm text-center">
                         {selectedUpdate.sections.labour.summary.grandTotal}
-                      </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Stage Passing Section */}
-                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                  <h4 className="text-lg font-medium text-slate-50 mb-4 flex items-center">
-                    📋 Stage Passing Activities
-                  </h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-medium text-slate-50">
+                      📋 Stage Passing Activities
+                    </h4>
+                    <div className="text-sm text-slate-400">
+                      {
+                        selectedUpdate.sections.stagePassing.summary
+                          .totalActivities
+                      }{' '}
+                      activities selected
+                    </div>
+                  </div>
+
                   {selectedUpdate.sections.stagePassing.selectedActivities
                     .length === 0 ? (
-                    <p className="text-slate-400 text-sm">
-                      No activities selected
-                    </p>
+                    <div className="bg-slate-800 rounded-lg p-8 text-center">
+                      <div className="text-slate-400 text-lg mb-2">📋</div>
+                      <p className="text-slate-400">
+                        No activities were selected for this update
+                      </p>
+                    </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {selectedUpdate.sections.stagePassing.selectedActivities.map(
                         (asset) => (
                           <div
                             key={asset.assetId}
-                            className="bg-slate-700/50 rounded p-3"
+                            className="bg-slate-800 rounded-lg border border-slate-700"
                           >
-                            <div className="font-medium text-slate-50 mb-2">
-                              {asset.assetName} ({asset.assetType})
+                            <div className="px-4 py-3 border-b border-slate-700 bg-slate-750">
+                              <div className="flex items-center justify-between">
+                                <h5 className="font-medium text-slate-50">
+                                  {asset.assetName}
+                                </h5>
+                                <span className="text-xs text-slate-400 bg-slate-700 px-2 py-1 rounded">
+                                  {asset.assetType}
+                                </span>
+                              </div>
                             </div>
-                            <div className="space-y-1">
-                              {asset.activities.map((activity) => (
-                                <div
-                                  key={activity.id}
-                                  className="text-sm text-slate-300 ml-4"
-                                >
-                                  • {activity.name}
-                                </div>
-                              ))}
+                            <div className="p-4">
+                              <div className="space-y-2">
+                                {asset.activities.map((activity) => (
+                                  <div
+                                    key={activity.id}
+                                    className="flex items-center space-x-3 p-2 bg-slate-700/50 rounded"
+                                  >
+                                    <div className="w-4 h-4 bg-emerald-500 rounded-sm flex items-center justify-center">
+                                      <span className="text-white text-xs">
+                                        ✓
+                                      </span>
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="text-slate-50 font-medium text-sm">
+                                        {activity.name}
+                                      </div>
+                                      <div className="text-slate-400 text-xs">
+                                        {activity.description}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         ),
                       )}
                     </div>
                   )}
+
+                  {/* Summary */}
+                  <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                    <h5 className="font-medium text-slate-50 mb-3">Summary</h5>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-slate-400">
+                          Total Selected Activities:
+                        </span>
+                        <span className="ml-2 text-emerald-400 font-medium">
+                          {
+                            selectedUpdate.sections.stagePassing.summary
+                              .totalActivities
+                          }
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">
+                          Assets with Activities:
+                        </span>
+                        <span className="ml-2 text-emerald-400 font-medium">
+                          {
+                            selectedUpdate.sections.stagePassing.summary
+                              .activeAssets
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Material Register Section */}
-                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                  <h4 className="text-lg font-medium text-slate-50 mb-4 flex items-center">
-                    📦 Material Register -{' '}
-                    {selectedUpdate.sections.materialRegister.materialName}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h5 className="font-medium text-emerald-300 mb-2">
-                        Received Entries
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-medium text-slate-50">
+                      📦 Material Registers
+                    </h4>
+                    <div className="text-sm text-slate-400">
+                      Date: {formatDate(selectedUpdate.date)}
+                    </div>
+                  </div>
+
+                  {/* Material Name */}
+                  <div>
+                    <label className="block text-slate-300 text-sm font-medium mb-2">
+                      Material Name
+                    </label>
+                    <div className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 opacity-60">
+                      {selectedUpdate.sections.materialRegister.materialName ||
+                        'No material specified'}
+                    </div>
+                  </div>
+
+                  {/* Received Section */}
+                  <div className="bg-slate-800 rounded-lg overflow-hidden">
+                    <div className="bg-green-900/20 border-b border-slate-700 px-4 py-3">
+                      <h5 className="font-medium text-slate-50 flex items-center">
+                        <span className="mr-2">📥</span>
+                        Received Materials (
+                        {
+                          selectedUpdate.sections.materialRegister
+                            .receivedEntries.length
+                        }{' '}
+                        entries)
                       </h5>
-                      {selectedUpdate.sections.materialRegister.receivedEntries
-                        .length === 0 ? (
-                        <p className="text-slate-400 text-sm">No entries</p>
-                      ) : (
-                        <div className="space-y-2">
+                    </div>
+
+                    {selectedUpdate.sections.materialRegister.receivedEntries
+                      .length === 0 ? (
+                      <div className="p-4 text-center text-slate-400">
+                        No received entries for this material
+                      </div>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        <div className="divide-y divide-slate-700">
                           {selectedUpdate.sections.materialRegister.receivedEntries.map(
                             (entry) => (
                               <div
                                 key={entry.id}
-                                className="bg-slate-700/50 rounded p-2 text-sm"
+                                className="p-4 hover:bg-slate-700/30"
                               >
-                                <div className="text-slate-50">
-                                  {entry.invoiceBillNo} - {entry.quantity}{' '}
-                                  {entry.unit}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Invoice:
+                                    </span>
+                                    <div className="text-slate-50 font-medium">
+                                      {entry.invoiceBillNo}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Date:
+                                    </span>
+                                    <div className="text-slate-50">
+                                      {new Date(
+                                        entry.date,
+                                      ).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Quantity:
+                                    </span>
+                                    <div className="text-emerald-400 font-medium">
+                                      {entry.quantity} {entry.unit}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Supplier:
+                                    </span>
+                                    <div className="text-slate-50">
+                                      {entry.supplierName}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-slate-400">
-                                  {entry.supplierName}
+                                <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Email:
+                                    </span>
+                                    <div className="text-slate-50">
+                                      {entry.supplierEmail}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Phone:
+                                    </span>
+                                    <div className="text-slate-50">
+                                      {entry.supplierNo}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             ),
                           )}
                         </div>
-                      )}
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-red-300 mb-2">
-                        Issued Entries
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Issued Section */}
+                  <div className="bg-slate-800 rounded-lg overflow-hidden">
+                    <div className="bg-red-900/20 border-b border-slate-700 px-4 py-3">
+                      <h5 className="font-medium text-slate-50 flex items-center">
+                        <span className="mr-2">📤</span>
+                        Issued Materials (
+                        {
+                          selectedUpdate.sections.materialRegister.issuedEntries
+                            .length
+                        }{' '}
+                        entries)
                       </h5>
-                      {selectedUpdate.sections.materialRegister.issuedEntries
-                        .length === 0 ? (
-                        <p className="text-slate-400 text-sm">No entries</p>
-                      ) : (
-                        <div className="space-y-2">
+                    </div>
+
+                    {selectedUpdate.sections.materialRegister.issuedEntries
+                      .length === 0 ? (
+                      <div className="p-4 text-center text-slate-400">
+                        No issued entries for this material
+                      </div>
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        <div className="divide-y divide-slate-700">
                           {selectedUpdate.sections.materialRegister.issuedEntries.map(
                             (entry) => (
                               <div
                                 key={entry.id}
-                                className="bg-slate-700/50 rounded p-2 text-sm"
+                                className="p-4 hover:bg-slate-700/30"
                               >
-                                <div className="text-slate-50">
-                                  {entry.quantity} {entry.unit}
-                                </div>
-                                <div className="text-slate-400">
-                                  {entry.assetName}
+                                <div className="grid grid-cols-3 gap-3 text-sm">
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Asset:
+                                    </span>
+                                    <div className="text-slate-50 font-medium">
+                                      {entry.assetName}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Date:
+                                    </span>
+                                    <div className="text-slate-50">
+                                      {new Date(
+                                        entry.date,
+                                      ).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Quantity:
+                                    </span>
+                                    <div className="text-red-400 font-medium">
+                                      {entry.quantity} {entry.unit}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             ),
                           )}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
