@@ -6,7 +6,6 @@ import { useAppState } from './hooks/useAppState';
 import { useFileOperations } from './hooks/useFileOperations';
 import Sidebar from './components/Sidebar';
 import UpdateHistory from './components/UpdateHistory';
-
 // Types for labour data
 type EngineerType = 'Degree' | 'Diploma';
 type SkilledLabourType =
@@ -33,6 +32,7 @@ type Activity = {
   name: string;
   description: string;
   isSelected: boolean;
+  isInProgress: boolean;
 };
 
 type Asset = {
@@ -489,24 +489,28 @@ function Dashboard() {
             name: 'Excavation',
             description: 'Site excavation and earthwork',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'footing',
             name: 'Footing Construction',
             description: 'Foundation footing and base',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'backfill',
             name: 'Backfilling',
             description: 'Backfill and compaction',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'waterproof',
             name: 'Waterproofing',
             description: 'Foundation waterproofing',
             isSelected: false,
+            isInProgress: false,
           },
         ],
       },
@@ -520,24 +524,28 @@ function Dashboard() {
             name: 'Column Construction',
             description: 'RCC column construction',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'beam',
             name: 'Beam Construction',
             description: 'RCC beam construction',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'slab',
             name: 'Slab Construction',
             description: 'RCC slab construction',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'reinforcement',
             name: 'Reinforcement Work',
             description: 'Steel reinforcement placement',
             isSelected: false,
+            isInProgress: false,
           },
         ],
       },
@@ -551,18 +559,21 @@ function Dashboard() {
             name: 'Brickwork',
             description: 'Brick masonry construction',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'blockwork',
             name: 'Block Work',
             description: 'Concrete block masonry',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'pointing',
             name: 'Pointing & Plastering',
             description: 'Wall finishing work',
             isSelected: false,
+            isInProgress: false,
           },
         ],
       },
@@ -576,24 +587,28 @@ function Dashboard() {
             name: 'Conduit Installation',
             description: 'Electrical conduit laying',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'wiring',
             name: 'Wiring Work',
             description: 'Electrical wiring installation',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'panel',
             name: 'Panel Installation',
             description: 'Electrical panel setup',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'testing',
             name: 'Testing & Commissioning',
             description: 'Electrical system testing',
             isSelected: false,
+            isInProgress: false,
           },
         ],
       },
@@ -607,18 +622,21 @@ function Dashboard() {
             name: 'Pipe Installation',
             description: 'Water supply and drainage piping',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'fixtures',
             name: 'Fixture Installation',
             description: 'Sanitary fixtures installation',
             isSelected: false,
+            isInProgress: false,
           },
           {
             id: 'pressure',
             name: 'Pressure Testing',
             description: 'Plumbing system pressure test',
             isSelected: false,
+            isInProgress: false,
           },
         ],
       },
@@ -632,6 +650,25 @@ function Dashboard() {
       receivedEntries: [],
       issuedEntries: [],
     });
+
+  // Saved daily updates state
+  const [savedUpdates, setSavedUpdates] = useState<
+    Array<{
+      id: string;
+      date: string;
+      timestamp: string;
+      sections: {
+        labour: LabourData;
+        stagePassing: {
+          selectedAssetId: string | null;
+          assets: Asset[];
+        };
+        inProgress: Asset[];
+        completed: Asset[];
+        materialRegister: MaterialRegisterData;
+      };
+    }>
+  >([]);
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
@@ -669,6 +706,27 @@ function Dashboard() {
               activities: asset.activities.map((activity) =>
                 activity.id === activityId
                   ? { ...activity, isSelected: !activity.isSelected }
+                  : activity,
+              ),
+            }
+          : asset,
+      ),
+    }));
+  };
+
+  const handleActivityInProgressToggle = (
+    assetId: string,
+    activityId: string,
+  ) => {
+    setStagePassingData((prev) => ({
+      ...prev,
+      assets: prev.assets.map((asset) =>
+        asset.id === assetId
+          ? {
+              ...asset,
+              activities: asset.activities.map((activity) =>
+                activity.id === activityId
+                  ? { ...activity, isInProgress: !activity.isInProgress }
                   : activity,
               ),
             }
@@ -725,75 +783,46 @@ function Dashboard() {
 
   const handleExportDailyUpdate = () => {
     const currentDate = new Date().toISOString().split('T')[0];
+    const updateId = `update-${Date.now()}`;
 
-    // Combine all three sections into a single daily update
+    // Create completed activities array from stage passing data
+    const completedActivities = stagePassingData.assets
+      .map((asset) => ({
+        ...asset,
+        activities: asset.activities.filter(
+          (activity) => activity.isSelected && !activity.isInProgress,
+        ),
+      }))
+      .filter((asset) => asset.activities.length > 0);
+
+    // Create in-progress activities array from stage passing data
+    const inProgressActivities = stagePassingData.assets
+      .map((asset) => ({
+        ...asset,
+        activities: asset.activities.filter(
+          (activity) => activity.isInProgress,
+        ),
+      }))
+      .filter((asset) => asset.activities.length > 0);
+
+    // Combine all sections into a single daily update
     const dailyUpdate = {
+      id: updateId,
       date: currentDate,
       timestamp: new Date().toISOString(),
       sections: {
-        labour: {
-          data: labourData,
-          summary: {
-            totalEngineers: labourData.Degree + labourData.Diploma,
-            totalSkilledLabour:
-              labourData.Mason +
-              labourData.Carpenter +
-              labourData['Bar bender'] +
-              labourData.Tier +
-              labourData.Painter +
-              labourData.Polisher +
-              labourData.Welder +
-              labourData.Plumber +
-              labourData.Glazier,
-            totalUnskilledLabour:
-              labourData.Male +
-              labourData.Bhisty +
-              labourData['Mazdoor(male)'] +
-              labourData['Mazdoor(female)'],
-            grandTotal: Object.values(labourData).reduce(
-              (sum, count) => sum + count,
-              0,
-            ),
-          },
-        },
-        stagePassing: {
-          selectedActivities: stagePassingData.assets
-            .map((asset) => ({
-              assetId: asset.id,
-              assetName: asset.name,
-              assetType: asset.type,
-              activities: asset.activities
-                .filter((activity) => activity.isSelected)
-                .map((activity) => ({
-                  id: activity.id,
-                  name: activity.name,
-                  description: activity.description,
-                })),
-            }))
-            .filter((asset) => asset.activities.length > 0),
-          summary: {
-            totalActivities: stagePassingData.assets.reduce(
-              (total, asset) =>
-                total + asset.activities.filter((a) => a.isSelected).length,
-              0,
-            ),
-            activeAssets: stagePassingData.assets.filter((asset) =>
-              asset.activities.some((a) => a.isSelected),
-            ).length,
-          },
-        },
-        materialRegister: {
-          materialName: materialRegisterData.materialName,
-          receivedEntries: materialRegisterData.receivedEntries,
-          issuedEntries: materialRegisterData.issuedEntries,
-          summary: {
-            totalReceivedEntries: materialRegisterData.receivedEntries.length,
-            totalIssuedEntries: materialRegisterData.issuedEntries.length,
-          },
-        },
+        labour: labourData,
+        stagePassing: stagePassingData,
+        inProgress: inProgressActivities,
+        completed: completedActivities,
+        materialRegister: materialRegisterData,
       },
     };
 
+    // Save to local state
+    setSavedUpdates((prev) => [...prev, dailyUpdate]);
+
+    // Export as JSON file
     const dataStr = JSON.stringify(dailyUpdate, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -804,6 +833,12 @@ function Dashboard() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    // Close dialog and reset forms
+    setIsDialogOpen(false);
+    // Optionally reset the form data
+    // setLabourData({ Degree: 0, Diploma: 0, ... });
+    // setMaterialRegisterData({ materialName: '', receivedEntries: [], issuedEntries: [] });
   };
 
   const labourSections = {
@@ -830,6 +865,8 @@ function Dashboard() {
   const tabs = [
     { id: 'labour', label: 'Labour', icon: '👷' },
     { id: 'stage-passing', label: 'Stage Passing', icon: '📋' },
+    { id: 'in-progress', label: 'In-Progress', icon: '🚧' },
+    { id: 'completed', label: 'Completed', icon: '✅' },
     { id: 'material-registers', label: 'Material Registers', icon: '📦' },
   ];
 
@@ -854,7 +891,13 @@ function Dashboard() {
         </div>
 
         {/* Update History */}
-        <UpdateHistory />
+        <UpdateHistory
+          updates={savedUpdates}
+          onUpdateSelect={(update) => {
+            console.log('Selected update:', update);
+            // You can add additional logic here if needed
+          }}
+        />
       </div>
 
       {/* Dashboard Dialog */}
@@ -1223,6 +1266,411 @@ function Dashboard() {
                         className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-600 bg-transparent hover:bg-slate-700 text-slate-300 h-9 px-4 py-2"
                       >
                         🗑️ Clear Activities
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'in-progress' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-medium text-slate-50">
+                        🚧 In-Progress Activities
+                      </h4>
+                      <div className="text-sm text-slate-400">
+                        Date: {new Date().toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    {/* Asset Selection */}
+                    <div>
+                      <label className="block text-slate-300 text-sm font-medium mb-3">
+                        Select Asset Category
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {stagePassingData.assets.map((asset) => {
+                          const inProgressCount = asset.activities.filter(
+                            (a) => a.isInProgress,
+                          ).length;
+                          const totalCount = asset.activities.length;
+
+                          return (
+                            <button
+                              key={asset.id}
+                              type="button"
+                              onClick={() => handleAssetSelection(asset.id)}
+                              className={`p-4 rounded-lg border-2 text-left transition-all ${
+                                stagePassingData.selectedAssetId === asset.id
+                                  ? 'border-orange-400 bg-orange-900/20'
+                                  : 'border-slate-600 bg-slate-800 hover:border-slate-500'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="font-medium text-slate-50">
+                                  {asset.name}
+                                </h5>
+                                <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">
+                                  {asset.type}
+                                </span>
+                              </div>
+                              <div className="text-sm text-slate-400">
+                                {inProgressCount}/{totalCount} activities in
+                                progress
+                              </div>
+                              {inProgressCount > 0 && (
+                                <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
+                                  <div
+                                    className="bg-orange-400 h-2 rounded-full transition-all"
+                                    style={{
+                                      width: `${(inProgressCount / totalCount) * 100}%`,
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Activities Selection */}
+                    {stagePassingData.selectedAssetId && (
+                      <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-3">
+                          Select Activities Currently In Progress
+                        </label>
+                        {(() => {
+                          const selectedAsset = stagePassingData.assets.find(
+                            (asset) =>
+                              asset.id === stagePassingData.selectedAssetId,
+                          );
+
+                          if (!selectedAsset) return null;
+
+                          return (
+                            <div className="bg-slate-800 rounded-lg overflow-hidden border border-orange-500/30">
+                              <div className="bg-orange-900/20 px-4 py-3 border-b border-slate-600">
+                                <h5 className="font-medium text-slate-50 flex items-center">
+                                  <span className="mr-2">
+                                    {selectedAsset.type === 'Structural' &&
+                                      '🏗️'}
+                                    {selectedAsset.type === 'Construction' &&
+                                      '🧱'}
+                                    {selectedAsset.type === 'MEP' && '⚡'}
+                                  </span>
+                                  {selectedAsset.name}
+                                  <span className="ml-2 text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded">
+                                    {
+                                      selectedAsset.activities.filter(
+                                        (a) => a.isInProgress,
+                                      ).length
+                                    }{' '}
+                                    in progress
+                                  </span>
+                                </h5>
+                                <p className="text-sm text-slate-400 mt-1">
+                                  Activities that are currently being worked on
+                                </p>
+                              </div>
+
+                              <div className="divide-y divide-slate-700">
+                                {selectedAsset.activities.map((activity) => (
+                                  <div
+                                    key={activity.id}
+                                    className="p-4 hover:bg-slate-750"
+                                  >
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={activity.isInProgress}
+                                        onChange={() =>
+                                          handleActivityInProgressToggle(
+                                            selectedAsset.id,
+                                            activity.id,
+                                          )
+                                        }
+                                        className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-orange-400 focus:ring-orange-400 focus:ring-offset-slate-900"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="font-medium text-slate-50 flex items-center">
+                                          {activity.name}
+                                          {activity.isInProgress && (
+                                            <span className="ml-2 text-xs bg-orange-500 text-white px-2 py-0.5 rounded">
+                                              In Progress
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="text-sm text-slate-400 mt-1">
+                                          {activity.description}
+                                        </div>
+                                      </div>
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Summary and Export */}
+                    <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                      <h5 className="font-medium text-slate-50 mb-3">
+                        Summary
+                      </h5>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-slate-400">
+                            Total In-Progress Activities:
+                          </span>
+                          <span className="ml-2 text-orange-400 font-medium">
+                            {stagePassingData.assets.reduce(
+                              (total, asset) =>
+                                total +
+                                asset.activities.filter((a) => a.isInProgress)
+                                  .length,
+                              0,
+                            )}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">
+                            Assets with In-Progress:
+                          </span>
+                          <span className="ml-2 text-orange-400 font-medium">
+                            {
+                              stagePassingData.assets.filter((asset) =>
+                                asset.activities.some((a) => a.isInProgress),
+                              ).length
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 justify-end pt-4 border-t border-slate-700">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStagePassingData((prev) => ({
+                            ...prev,
+                            selectedAssetId: null,
+                            assets: prev.assets.map((asset) => ({
+                              ...asset,
+                              activities: asset.activities.map((activity) => ({
+                                ...activity,
+                                isInProgress: false,
+                              })),
+                            })),
+                          }));
+                        }}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-600 bg-transparent hover:bg-slate-700 text-slate-300 h-9 px-4 py-2"
+                      >
+                        🗑️ Clear In-Progress
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'completed' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-lg font-medium text-slate-50">
+                        ✅ Completed Activities
+                      </h4>
+                      <div className="text-sm text-slate-400">
+                        Date: {new Date().toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    {/* Asset Selection */}
+                    <div>
+                      <label className="block text-slate-300 text-sm font-medium mb-3">
+                        Select Asset Category
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {stagePassingData.assets.map((asset) => {
+                          const completedCount = asset.activities.filter(
+                            (a) => a.isSelected,
+                          ).length;
+                          const totalCount = asset.activities.length;
+
+                          return (
+                            <button
+                              key={asset.id}
+                              type="button"
+                              onClick={() => handleAssetSelection(asset.id)}
+                              className={`p-4 rounded-lg border-2 text-left transition-all ${
+                                stagePassingData.selectedAssetId === asset.id
+                                  ? 'border-emerald-400 bg-emerald-900/20'
+                                  : 'border-slate-600 bg-slate-800 hover:border-slate-500'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="font-medium text-slate-50">
+                                  {asset.name}
+                                </h5>
+                                <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">
+                                  {asset.type}
+                                </span>
+                              </div>
+                              <div className="text-sm text-slate-400">
+                                {completedCount}/{totalCount} activities
+                                completed
+                              </div>
+                              {completedCount > 0 && (
+                                <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
+                                  <div
+                                    className="bg-emerald-400 h-2 rounded-full transition-all"
+                                    style={{
+                                      width: `${(completedCount / totalCount) * 100}%`,
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Activities Selection */}
+                    {stagePassingData.selectedAssetId && (
+                      <div>
+                        <label className="block text-slate-300 text-sm font-medium mb-3">
+                          Mark Activities as Completed
+                        </label>
+                        {(() => {
+                          const selectedAsset = stagePassingData.assets.find(
+                            (asset) =>
+                              asset.id === stagePassingData.selectedAssetId,
+                          );
+
+                          if (!selectedAsset) return null;
+
+                          return (
+                            <div className="bg-slate-800 rounded-lg overflow-hidden border border-emerald-500/30">
+                              <div className="bg-emerald-900/20 px-4 py-3 border-b border-slate-600">
+                                <h5 className="font-medium text-slate-50 flex items-center">
+                                  <span className="mr-2">
+                                    {selectedAsset.type === 'Structural' &&
+                                      '🏗️'}
+                                    {selectedAsset.type === 'Construction' &&
+                                      '🧱'}
+                                    {selectedAsset.type === 'MEP' && '⚡'}
+                                  </span>
+                                  {selectedAsset.name}
+                                  <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded">
+                                    {
+                                      selectedAsset.activities.filter(
+                                        (a) => a.isSelected,
+                                      ).length
+                                    }{' '}
+                                    completed
+                                  </span>
+                                </h5>
+                                <p className="text-sm text-slate-400 mt-1">
+                                  Activities that have been finished and are
+                                  ready for review
+                                </p>
+                              </div>
+
+                              <div className="divide-y divide-slate-700">
+                                {selectedAsset.activities.map((activity) => (
+                                  <div
+                                    key={activity.id}
+                                    className="p-4 hover:bg-slate-750"
+                                  >
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={activity.isSelected}
+                                        onChange={() =>
+                                          handleActivityToggle(
+                                            selectedAsset.id,
+                                            activity.id,
+                                          )
+                                        }
+                                        className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-400 focus:ring-emerald-400 focus:ring-offset-slate-900"
+                                      />
+                                      <div className="flex-1">
+                                        <div className="font-medium text-slate-50 flex items-center">
+                                          {activity.name}
+                                          {activity.isSelected && (
+                                            <span className="ml-2 text-xs bg-emerald-500 text-white px-2 py-0.5 rounded">
+                                              Completed
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="text-sm text-slate-400 mt-1">
+                                          {activity.description}
+                                        </div>
+                                      </div>
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Summary and Export */}
+                    <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                      <h5 className="font-medium text-slate-50 mb-3">
+                        Summary
+                      </h5>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-slate-400">
+                            Total Completed Activities:
+                          </span>
+                          <span className="ml-2 text-emerald-400 font-medium">
+                            {stagePassingData.assets.reduce(
+                              (total, asset) =>
+                                total +
+                                asset.activities.filter((a) => a.isSelected)
+                                  .length,
+                              0,
+                            )}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">
+                            Assets with Completed:
+                          </span>
+                          <span className="ml-2 text-emerald-400 font-medium">
+                            {
+                              stagePassingData.assets.filter((asset) =>
+                                asset.activities.some((a) => a.isSelected),
+                              ).length
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 justify-end pt-4 border-t border-slate-700">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStagePassingData((prev) => ({
+                            ...prev,
+                            selectedAssetId: null,
+                            assets: prev.assets.map((asset) => ({
+                              ...asset,
+                              activities: asset.activities.map((activity) => ({
+                                ...activity,
+                                isSelected: false,
+                              })),
+                            })),
+                          }));
+                        }}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-600 bg-transparent hover:bg-slate-700 text-slate-300 h-9 px-4 py-2"
+                      >
+                        🗑️ Clear Completed
                       </button>
                     </div>
                   </div>
