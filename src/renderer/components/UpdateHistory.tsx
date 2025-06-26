@@ -661,15 +661,6 @@ function UpdateHistory({
             const activityCounts = getActivityCounts(
               update.sections.stagePassing.assets,
             );
-            const materialBalance =
-              update.sections.materialRegister.receivedEntries.reduce(
-                (sum, entry) => sum + entry.quantity,
-                0,
-              ) -
-              update.sections.materialRegister.issuedEntries.reduce(
-                (sum, entry) => sum + entry.quantity,
-                0,
-              );
 
             return (
               <div
@@ -765,9 +756,9 @@ function UpdateHistory({
                       </span>
                     </div>
                     <div className="text-xs text-slate-500">
-                      Balance: {materialBalance}{' '}
-                      {update.sections.materialRegister.receivedEntries[0]
-                        ?.unit || ''}
+                      Entries:{' '}
+                      {update.sections.materialRegister.receivedEntries.length +
+                        update.sections.materialRegister.issuedEntries.length}
                     </div>
                   </div>
                 </div>
@@ -1163,38 +1154,61 @@ function UpdateHistory({
                               No materials received
                             </p>
                           ) : (
-                            <div className="space-y-3">
-                              {selectedUpdate.sections.materialRegister.receivedEntries.map(
-                                (entry) => (
-                                  <div
-                                    key={entry.id}
-                                    className="bg-slate-700/50 rounded p-3"
-                                  >
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <div className="font-medium text-slate-200">
-                                          Invoice: {entry.invoiceBillNo}
-                                        </div>
-                                        <div className="text-sm text-slate-400">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b border-slate-600">
+                                    <th className="text-left py-3 px-4 font-medium text-slate-300">
+                                      Invoice/Bill No
+                                    </th>
+                                    <th className="text-left py-3 px-4 font-medium text-slate-300">
+                                      Date
+                                    </th>
+                                    <th className="text-left py-3 px-4 font-medium text-slate-300">
+                                      Supplier
+                                    </th>
+                                    <th className="text-left py-3 px-4 font-medium text-slate-300">
+                                      Contact
+                                    </th>
+                                    <th className="text-right py-3 px-4 font-medium text-slate-300">
+                                      Quantity
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {selectedUpdate.sections.materialRegister.receivedEntries.map(
+                                    (entry) => (
+                                      <tr
+                                        key={entry.id}
+                                        className="border-b border-slate-700/50 hover:bg-slate-700/30"
+                                      >
+                                        <td className="py-3 px-4 font-medium text-slate-200">
+                                          {entry.invoiceBillNo}
+                                        </td>
+                                        <td className="py-3 px-4 text-slate-400">
                                           {new Date(
                                             entry.date,
                                           ).toLocaleDateString()}
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="font-medium text-emerald-400">
+                                        </td>
+                                        <td className="py-3 px-4">
+                                          <div className="text-slate-200">
+                                            {entry.supplierName}
+                                          </div>
+                                          <div className="text-xs text-slate-400">
+                                            {entry.supplierEmail}
+                                          </div>
+                                        </td>
+                                        <td className="py-3 px-4 text-slate-400">
+                                          {entry.supplierNo}
+                                        </td>
+                                        <td className="py-3 px-4 text-right font-medium text-emerald-400">
                                           {entry.quantity} {entry.unit}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="text-sm text-slate-300">
-                                      <div>Supplier: {entry.supplierName}</div>
-                                      <div>Email: {entry.supplierEmail}</div>
-                                      <div>Phone: {entry.supplierNo}</div>
-                                    </div>
-                                  </div>
-                                ),
-                              )}
+                                        </td>
+                                      </tr>
+                                    ),
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
                         </div>
@@ -1220,79 +1234,46 @@ function UpdateHistory({
                               No materials issued
                             </p>
                           ) : (
-                            <div className="space-y-3">
-                              {selectedUpdate.sections.materialRegister.issuedEntries.map(
-                                (entry) => (
-                                  <div
-                                    key={entry.id}
-                                    className="bg-slate-700/50 rounded p-3"
-                                  >
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <div className="font-medium text-slate-200">
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="border-b border-slate-600">
+                                    <th className="text-left py-3 px-4 font-medium text-slate-300">
+                                      Asset Name
+                                    </th>
+                                    <th className="text-left py-3 px-4 font-medium text-slate-300">
+                                      Date Issued
+                                    </th>
+                                    <th className="text-right py-3 px-4 font-medium text-slate-300">
+                                      Quantity
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {selectedUpdate.sections.materialRegister.issuedEntries.map(
+                                    (entry) => (
+                                      <tr
+                                        key={entry.id}
+                                        className="border-b border-slate-700/50 hover:bg-slate-700/30"
+                                      >
+                                        <td className="py-3 px-4 font-medium text-slate-200">
                                           {entry.assetName}
-                                        </div>
-                                        <div className="text-sm text-slate-400">
+                                        </td>
+                                        <td className="py-3 px-4 text-slate-400">
                                           {new Date(
                                             entry.date,
                                           ).toLocaleDateString()}
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="font-medium text-red-400">
+                                        </td>
+                                        <td className="py-3 px-4 text-right font-medium text-red-400">
                                           {entry.quantity} {entry.unit}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ),
-                              )}
+                                        </td>
+                                      </tr>
+                                    ),
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Material Balance Summary */}
-                    <div className="bg-slate-800 rounded-lg p-4">
-                      <h5 className="font-medium text-slate-50 mb-3">
-                        📊 Material Balance
-                      </h5>
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <div className="text-sm text-slate-400">
-                            Total Received
-                          </div>
-                          <div className="text-lg font-medium text-emerald-400">
-                            {selectedUpdate.sections.materialRegister.receivedEntries.reduce(
-                              (sum, entry) => sum + entry.quantity,
-                              0,
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-slate-400">
-                            Total Issued
-                          </div>
-                          <div className="text-lg font-medium text-red-400">
-                            {selectedUpdate.sections.materialRegister.issuedEntries.reduce(
-                              (sum, entry) => sum + entry.quantity,
-                              0,
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-slate-400">Balance</div>
-                          <div className="text-lg font-medium text-blue-400">
-                            {selectedUpdate.sections.materialRegister.receivedEntries.reduce(
-                              (sum, entry) => sum + entry.quantity,
-                              0,
-                            ) -
-                              selectedUpdate.sections.materialRegister.issuedEntries.reduce(
-                                (sum, entry) => sum + entry.quantity,
-                                0,
-                              )}
-                          </div>
                         </div>
                       </div>
                     </div>
